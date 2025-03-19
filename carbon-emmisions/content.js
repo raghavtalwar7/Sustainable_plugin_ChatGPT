@@ -1,10 +1,16 @@
+/**
+ * Improved ChatGPT Carbon Footprint Tracker - Content Script
+ * 
+ * Enhanced version with more robust assistant message detection
+ */
+
 const CARBON_CONSTANTS = {
-  WATTS_PER_TOKEN: 0.0003,
+  WATTS_PER_TOKEN: 0.3,
   CARBON_INTENSITY: 0.475,
-  SECONDS_PER_TOKEN: 0.01,
+  SECONDS_PER_TOKEN: 0.05,
   CHARS_PER_TOKEN: 4,
   
-  // List of ignored keywords=
+  // Expanded list of ignored keywords and patterns
   IGNORED_KEYWORDS: [
     'settings', 
     'chatgpt', 
@@ -21,7 +27,7 @@ const CARBON_CONSTANTS = {
     'plugin store'
   ],
 
-  // Selectors for assistant messages
+  // Improved selectors for assistant messages
   ASSISTANT_SELECTORS: [
     'div[data-testid="conversation-turn-response"]',
     'div[class*="assistant-message"]',
@@ -33,9 +39,9 @@ const CARBON_CONSTANTS = {
 
   // Patterns to exclude from message content
   EXCLUDE_PATTERNS: [
-    /\[.*?\]/g,
-    /\(.*?\)/g,
-    /^\s*[•\-]\s*/gm
+    /\[.*?\]/g,  // Remove content in square brackets
+    /\(.*?\)/g,  // Remove content in parentheses
+    /^\s*[•\-]\s*/gm  // Remove bullet points at start of lines
   ]
 };
 
@@ -55,7 +61,7 @@ class ImprovedCarbonTracker {
     this.createUI();
     this.initWhenReady().then(() => {
       this.isInitialized = true;
-      console.log('Carbon Tracker initialized successfully');
+      console.log('Improved Carbon Tracker initialized successfully');
     });
 
     this.setupMessageListener();
@@ -82,12 +88,12 @@ class ImprovedCarbonTracker {
         console.error('Error processing message:', error);
         sendResponse({ error: error.toString() });
       }
-      return true;
+      return true; // Keep channel open for async response
     });
   }
 
   resetStats() {
-    // Reset all variables
+    // Reset all tracking variables
     this.userMessageCount = 0;
     this.userTokens = 0;
     this.assistantTokens = 0;
@@ -114,6 +120,7 @@ class ImprovedCarbonTracker {
   }
 
   findChatContainer() {
+    // More comprehensive selector for different ChatGPT interfaces
     const selectors = [
       '#__next > div', 
       'main', 
@@ -164,7 +171,7 @@ class ImprovedCarbonTracker {
     this.userTokens = 0;
     this.assistantTokens = 0;
   
-    // Check user messages
+    // Analyze user messages
     userMessages.forEach((message, index) => {
       const text = this.extractCleanText(message);
       if (!this.isIgnoredMessage(text)) {
@@ -174,7 +181,7 @@ class ImprovedCarbonTracker {
       }
     });
   
-    // Check assistant messages
+    // Analyze assistant messages
     assistantMessages.forEach((message, index) => {
       const text = this.extractCleanText(message);
       if (!this.isIgnoredMessage(text)) {
@@ -191,6 +198,7 @@ class ImprovedCarbonTracker {
   }
 
   selectUserMessages() {
+    // More specific selectors for user messages
     const userSelectors = [
       'div[class*="user"]',
       'div[class*="message"][data-message-author="user"]',
@@ -204,14 +212,21 @@ class ImprovedCarbonTracker {
     return [];
   }
 
+  /**
+   * Improved method to select assistant messages with multiple fallback strategies
+   * @returns {Array<HTMLElement>} Array of assistant message elements
+   */
   selectAssistantMessages() {
+    // Try each selector strategy
     for (const selector of CARBON_CONSTANTS.ASSISTANT_SELECTORS) {
       const messages = document.querySelectorAll(selector);
       
       if (messages.length > 0) {
+        // Filter and process messages
         const validMessages = Array.from(messages)
           .filter(this.isValidAssistantMessage.bind(this))
           .filter(message => {
+            // Additional filtering to ensure it's a meaningful message
             const text = this.extractCleanText(message);
             return text.length > 10 && !this.isIgnoredMessage(text);
           });
@@ -223,11 +238,17 @@ class ImprovedCarbonTracker {
       }
     }
 
+    // Fallback: Try more aggressive selection if previous methods fail
     console.log('Falling back to aggressive assistant message selection');
     return this.fallbackAssistantMessageSelection();
   }
 
+  /**
+   * Fallback method to find assistant messages when standard selectors fail
+   * @returns {Array<HTMLElement>} Array of assistant message elements
+   */
   fallbackAssistantMessageSelection() {
+    // More aggressive and broader selection strategies
     const potentialSelectors = [
       'div:not([class*="user"]) > div.whitespace-pre-wrap',
       'div:not([class*="user"]) > p',
@@ -257,7 +278,11 @@ class ImprovedCarbonTracker {
     return [];
   }
 
-  /* To check if a message should be ignored*/
+  /**
+   * Check if a message should be ignored
+   * @param {string} text - The message text to check
+   * @returns {boolean} Whether the message should be ignored
+   */
   isIgnoredMessage(text) {
     const lowercaseText = text.toLowerCase();
     
@@ -266,7 +291,7 @@ class ImprovedCarbonTracker {
       lowercaseText.includes(keyword)
     );
   
-    // Additional filtering
+    // Additional filtering based on message characteristics
     const isShortOrEmpty = text.length <= 10;
     const isSystemMessage = lowercaseText.includes('chatgpt') || 
                             lowercaseText.includes('welcome') || 
@@ -278,27 +303,38 @@ class ImprovedCarbonTracker {
     return hasIgnoredKeyword || isShortOrEmpty || isSystemMessage;
   }
 
-  /*Extract clean text from a message element*/
+  /**
+   * Extract clean text from a message element with advanced cleaning
+   * @param {HTMLElement} messageElement - The message element
+   * @returns {string} Cleaned text content
+   */
   extractCleanText(messageElement) {
+    // Extract text while removing unnecessary elements
     let text = messageElement.innerText || messageElement.textContent || '';
     
+    // Remove specific patterns
     CARBON_CONSTANTS.EXCLUDE_PATTERNS.forEach(pattern => {
       text = text.replace(pattern, '');
     });
 
     // Additional cleaning steps
     return text.trim()
-      .replace(/\s+/g, ' ')
-      .replace(/[^\w\s.,!?]/g, '')
+      .replace(/\s+/g, ' ')  // Normalize whitespace
+      .replace(/[^\w\s.,!?]/g, '')  // Remove special characters
       .toLowerCase();
   }
 
-  /*Estimate the number of tokens*/
+  /**
+   * Estimate the number of tokens with more sophisticated approach
+   * @param {string} text - The text to estimate tokens for
+   * @returns {number} Estimated number of tokens
+   */
   estimateTokens(text) {
+    // More nuanced token estimation
     const wordCount = text.split(/\s+/).length;
     const charCount = text.length;
     
-    // Weighted estimation
+    // Weighted estimation with additional refinement
     return Math.max(1, Math.ceil(
       (0.6 * (charCount / CARBON_CONSTANTS.CHARS_PER_TOKEN)) + 
       (0.4 * wordCount)
@@ -306,11 +342,10 @@ class ImprovedCarbonTracker {
   }
 
   calculateCarbonEmissions() {
-    // Energy and carbon calculations
+    // More precise energy and carbon calculations
     const energyUsageWh = (
       this.totalTokens * 
-      CARBON_CONSTANTS.WATTS_PER_TOKEN * 
-      CARBON_CONSTANTS.SECONDS_PER_TOKEN
+      CARBON_CONSTANTS.WATTS_PER_TOKEN
     ) / 3600;
     
     this.carbonEmissions = energyUsageWh * CARBON_CONSTANTS.CARBON_INTENSITY;
@@ -328,19 +363,19 @@ class ImprovedCarbonTracker {
     // Conversion factors for carbon emissions equivalents
     return [
       { 
-        activity: "LED light (10W)", 
-        amount: (this.carbonEmissions / 0.8).toFixed(3), 
-        unit: "minutes" 
+        activity: "LED light (10W) ", 
+        amount: (this.carbonEmissions / 0.01).toFixed(3), 
+        unit: "hours (annualy)" 
       },
       { 
-        activity: "Boiling Water", 
+        activity: "Boiling ", 
         amount: (this.carbonEmissions / 15).toFixed(3), 
-        unit: "cups" 
+        unit: "cups water in kettle (annualy)" 
       },
       { 
-        activity: "Plant", 
-        amount: (this.carbonEmissions / 20).toFixed(3), 
-        unit: "trees" 
+        activity: "Video Streaming ", 
+        amount: (this.carbonEmissions / 55).toFixed(3), 
+        unit: "Hours (annualy)" 
       },
     ];
   }
@@ -418,8 +453,8 @@ class ImprovedCarbonTracker {
       <div style="margin-bottom: 10px;">
         <div style="font-weight: 500; margin-bottom: 5px; color: #10a37f;">Equivalent to:</div>
         ${equivalents.map(eq => `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 13px;">
-            <span>${eq.activity}:</span>
+          <div style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 3px; font-size: 13px;">
+            <span>${eq.activity}</span>
             <span>${eq.amount} ${eq.unit}</span>
           </div>
         `).join('')}
