@@ -1,11 +1,7 @@
-/**
- * Improved ChatGPT Carbon Footprint Tracker - Content Script
- * 
- * Enhanced version with more robust assistant message detection
- */
+// Content script for the Carbon Emissions extension
 
 const CARBON_CONSTANTS = {
-  WATTS_PER_TOKEN: 0.3,
+  WATTS_PER_TOKEN: 0.003,
   CARBON_INTENSITY: 0.475,
   SECONDS_PER_TOKEN: 0.05,
   CHARS_PER_TOKEN: 4,
@@ -39,9 +35,9 @@ const CARBON_CONSTANTS = {
 
   // Patterns to exclude from message content
   EXCLUDE_PATTERNS: [
-    /\[.*?\]/g,  // Remove content in square brackets
-    /\(.*?\)/g,  // Remove content in parentheses
-    /^\s*[•\-]\s*/gm  // Remove bullet points at start of lines
+    /\[.*?\]/g,  
+    /\(.*?\)/g,  
+    /^\s*[•\-]\s*/gm  
   ]
 };
 
@@ -61,7 +57,7 @@ class ImprovedCarbonTracker {
     this.createUI();
     this.initWhenReady().then(() => {
       this.isInitialized = true;
-      console.log('Improved Carbon Tracker initialized successfully');
+      console.log('Carbon Tracker initialized successfully');
     });
 
     this.setupMessageListener();
@@ -88,7 +84,7 @@ class ImprovedCarbonTracker {
         console.error('Error processing message:', error);
         sendResponse({ error: error.toString() });
       }
-      return true; // Keep channel open for async response
+      return true; 
     });
   }
 
@@ -120,7 +116,6 @@ class ImprovedCarbonTracker {
   }
 
   findChatContainer() {
-    // More comprehensive selector for different ChatGPT interfaces
     const selectors = [
       '#__next > div', 
       'main', 
@@ -198,7 +193,6 @@ class ImprovedCarbonTracker {
   }
 
   selectUserMessages() {
-    // More specific selectors for user messages
     const userSelectors = [
       'div[class*="user"]',
       'div[class*="message"][data-message-author="user"]',
@@ -212,21 +206,15 @@ class ImprovedCarbonTracker {
     return [];
   }
 
-  /**
-   * Improved method to select assistant messages with multiple fallback strategies
-   * @returns {Array<HTMLElement>} Array of assistant message elements
-   */
+  
   selectAssistantMessages() {
-    // Try each selector strategy
     for (const selector of CARBON_CONSTANTS.ASSISTANT_SELECTORS) {
       const messages = document.querySelectorAll(selector);
       
       if (messages.length > 0) {
-        // Filter and process messages
         const validMessages = Array.from(messages)
           .filter(this.isValidAssistantMessage.bind(this))
           .filter(message => {
-            // Additional filtering to ensure it's a meaningful message
             const text = this.extractCleanText(message);
             return text.length > 10 && !this.isIgnoredMessage(text);
           });
@@ -238,17 +226,12 @@ class ImprovedCarbonTracker {
       }
     }
 
-    // Fallback: Try more aggressive selection if previous methods fail
     console.log('Falling back to aggressive assistant message selection');
     return this.fallbackAssistantMessageSelection();
   }
 
-  /**
-   * Fallback method to find assistant messages when standard selectors fail
-   * @returns {Array<HTMLElement>} Array of assistant message elements
-   */
+  
   fallbackAssistantMessageSelection() {
-    // More aggressive and broader selection strategies
     const potentialSelectors = [
       'div:not([class*="user"]) > div.whitespace-pre-wrap',
       'div:not([class*="user"]) > p',
@@ -278,20 +261,14 @@ class ImprovedCarbonTracker {
     return [];
   }
 
-  /**
-   * Check if a message should be ignored
-   * @param {string} text - The message text to check
-   * @returns {boolean} Whether the message should be ignored
-   */
+
   isIgnoredMessage(text) {
     const lowercaseText = text.toLowerCase();
     
-    // Check against ignored keywords
     const hasIgnoredKeyword = CARBON_CONSTANTS.IGNORED_KEYWORDS.some(keyword => 
       lowercaseText.includes(keyword)
     );
   
-    // Additional filtering based on message characteristics
     const isShortOrEmpty = text.length <= 10;
     const isSystemMessage = lowercaseText.includes('chatgpt') || 
                             lowercaseText.includes('welcome') || 
@@ -303,16 +280,10 @@ class ImprovedCarbonTracker {
     return hasIgnoredKeyword || isShortOrEmpty || isSystemMessage;
   }
 
-  /**
-   * Extract clean text from a message element with advanced cleaning
-   * @param {HTMLElement} messageElement - The message element
-   * @returns {string} Cleaned text content
-   */
+
   extractCleanText(messageElement) {
-    // Extract text while removing unnecessary elements
     let text = messageElement.innerText || messageElement.textContent || '';
     
-    // Remove specific patterns
     CARBON_CONSTANTS.EXCLUDE_PATTERNS.forEach(pattern => {
       text = text.replace(pattern, '');
     });
@@ -346,7 +317,7 @@ class ImprovedCarbonTracker {
     const energyUsageWh = (
       this.totalTokens * 
       CARBON_CONSTANTS.WATTS_PER_TOKEN
-    ) / 3600;
+    );
     
     this.carbonEmissions = energyUsageWh * CARBON_CONSTANTS.CARBON_INTENSITY;
     
