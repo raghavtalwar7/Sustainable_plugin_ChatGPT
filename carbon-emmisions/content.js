@@ -334,9 +334,9 @@ class ImprovedCarbonTracker {
     // Conversion factors for carbon emissions equivalents
     return [
       { 
-        activity: "LED light (10W) ", 
-        amount: (this.carbonEmissions / 0.01).toFixed(3), 
-        unit: "hours (annualy)" 
+        activity: "Google queries", 
+        amount: (this.carbonEmissions / 0.2).toFixed(3), 
+        unit: "Number (annualy)" 
       },
       { 
         activity: "Boiling ", 
