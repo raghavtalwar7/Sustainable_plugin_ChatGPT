@@ -18,7 +18,7 @@ git clone https://github.com/raghavtalwar7/Sustainable_plugin_ChatGPT.git
 ## Google Chrome (and other Chromium-based browsers)
 1. After cloning the repository go to this chrome://extensions/ url and enable developer mode.
 2. There will be a load unpacked option on the top left of this page.
-3. Click on it and navigate to the location where you cloned this repository. Select the folder. Now you should be able to see the plugin.
+3. Click on it and navigate to the location where you cloned this repository. Select the folder `carbon-emissions`. Now you should be able to see the plugin.
 
 ## Firefox
 1. ```bash 
