@@ -336,17 +336,17 @@ class ImprovedCarbonTracker {
       { 
         activity: "Google queries", 
         amount: (this.carbonEmissions / 0.2).toFixed(3), 
-        unit: "Number (annualy)" 
+        unit: "Number (annually)" 
       },
       { 
         activity: "Boiling ", 
         amount: (this.carbonEmissions / 15).toFixed(3), 
-        unit: "cups water in kettle (annualy)" 
+        unit: "cups water in kettle (annually)" 
       },
       { 
         activity: "Video Streaming ", 
         amount: (this.carbonEmissions / 55).toFixed(3), 
-        unit: "Hours (annualy)" 
+        unit: "Hours (annually)" 
       },
     ];
   }
